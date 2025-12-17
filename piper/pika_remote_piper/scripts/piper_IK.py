@@ -89,6 +89,7 @@ class RosOperator(Node):
         self.sol_q = None
         self.msg = None
         self.xyzrpy = None
+        self.init_params()
         self.arm_ik = Arm_IK(args)
         self.init_ros()
 
@@ -256,12 +257,14 @@ class RosOperator(Node):
             status_msg.over_limit = True
             self.arm_control_status_publisher.publish(status_msg)
 
-    def init_ros(self):
+    def init_params(self):
         self.declare_parameter('index_name', "")
         self.declare_parameter('gripper_xyzrpy', "[0.19, 0, 0, 0, 0, 0]")
         self.args.index_name = self.get_parameter('index_name').get_parameter_value().string_value
         self.args.gripper_xyzrpy = self.get_parameter('gripper_xyzrpy').get_parameter_value().string_value
         self.args.gripper_xyzrpy = ast.literal_eval(self.args.gripper_xyzrpy)
+
+    def init_ros(self):
         self.arm_end_pose_subscriber = self.create_subscription(PoseStamped, f'/piper_IK{self.args.index_name}/ctrl_end_pose', self.arm_end_pose_callback, 1)
         self.arm_joint_state_subscriber = self.create_subscription(JointState, f'/joint_states_single{self.args.index_name}', self.arm_joint_state_callback, 1)
         self.arm_joint_state_publisher = self.create_publisher(JointState, f'/joint_states{self.args.index_name}', 1)
@@ -300,3 +303,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
