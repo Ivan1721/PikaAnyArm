@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration, Command, TextSubstitution
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
@@ -14,11 +15,14 @@ def generate_launch_description():
 
     declared_arguments = [
         DeclareLaunchArgument('paramsFile', default_value=os.path.join(share_dir, 'config', 'piper_rand_params.yaml')),
+        # sim:=true no arranca el driver CAN; el brazo lo pone pika_sim (sim_piper_single.launch.py)
+        DeclareLaunchArgument('sim', default_value='false'),
     ]
     parameter_file = LaunchConfiguration('paramsFile')
 
     locator_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('piper'), 'launch', 'start_single_piper.launch.py')])
+        PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('piper'), 'launch', 'start_single_piper.launch.py')]),
+        condition=UnlessCondition(LaunchConfiguration('sim'))
     )
 
     return LaunchDescription(declared_arguments+[
