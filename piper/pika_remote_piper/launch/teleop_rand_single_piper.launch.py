@@ -17,8 +17,12 @@ def generate_launch_description():
         DeclareLaunchArgument('paramsFile', default_value=os.path.join(share_dir, 'config', 'piper_rand_params.yaml')),
         # sim:=true no arranca el driver CAN; el brazo lo pone pika_sim (sim_piper_single.launch.py)
         DeclareLaunchArgument('sim', default_value='false'),
+        # index_name:=_l o _r: usa los topics de un Sense del montaje doble (start_multi_sensor.bash),
+        # p. ej. para teleoperar el Piper simulado con uno de los dos Sense conectados
+        DeclareLaunchArgument('index_name', default_value=''),
     ]
     parameter_file = LaunchConfiguration('paramsFile')
+    index_name = LaunchConfiguration('index_name')
 
     locator_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('piper'), 'launch', 'start_single_piper.launch.py')]),
@@ -30,8 +34,8 @@ def generate_launch_description():
         Node(
             package='pika_remote_piper',
             executable='piper_FK.py',
-            name='piper_FK',
-            parameters=[{'index_name': '',
+            name=['piper_FK', index_name],
+            parameters=[{'index_name': index_name,
                          'paramsFile': parameter_file}],
             respawn=True,
             output='screen'
@@ -39,8 +43,8 @@ def generate_launch_description():
         Node(
             package='pika_remote_piper',
             executable='piper_IK.py',
-            name='piper_IK',
-            parameters=[{'index_name': '',
+            name=['piper_IK', index_name],
+            parameters=[{'index_name': index_name,
                          'paramsFile': parameter_file}],
             respawn=True,
             output='screen'
@@ -48,8 +52,8 @@ def generate_launch_description():
         Node(
             package='pika_remote_piper',
             executable='teleop_piper_publish.py',
-            name='teleop_piper',
-            parameters=[{'index_name': ''}],
+            name=['teleop_piper', index_name],
+            parameters=[{'index_name': index_name}],
             respawn=True,
             output='screen'
         ),
