@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, Command, TextSubstitution
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
@@ -14,11 +15,15 @@ def generate_launch_description():
 
     declared_arguments = [
         DeclareLaunchArgument('paramsFile', default_value=os.path.join(share_dir, 'config', 'piper_rand_params.yaml')),
+        # driver:=false no arranca los drivers CAN: para usar dos computadores, con los drivers
+        # (start_double_piper.launch.py) corriendo en el PC conectado a can_left y can_right
+        DeclareLaunchArgument('driver', default_value='true'),
     ]
     parameter_file = LaunchConfiguration('paramsFile')
 
     locator_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('piper'), 'launch', 'start_double_piper.launch.py')])
+        PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('piper'), 'launch', 'start_double_piper.launch.py')]),
+        condition=IfCondition(LaunchConfiguration('driver'))
     )
 
     return LaunchDescription(declared_arguments+[

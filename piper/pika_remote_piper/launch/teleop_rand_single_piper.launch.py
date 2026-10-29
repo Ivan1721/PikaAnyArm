@@ -2,8 +2,8 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import UnlessCondition
-from launch.substitutions import LaunchConfiguration, Command, TextSubstitution
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, Command, TextSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -17,6 +17,9 @@ def generate_launch_description():
         DeclareLaunchArgument('paramsFile', default_value=os.path.join(share_dir, 'config', 'piper_rand_params.yaml')),
         # sim:=true no arranca el driver CAN; el brazo lo pone pika_sim (sim_piper_single.launch.py)
         DeclareLaunchArgument('sim', default_value='false'),
+        # driver:=false tampoco arranca el driver CAN: para usar dos computadores, con el driver
+        # (start_single_piper.launch.py) corriendo en el PC conectado al CAN del brazo
+        DeclareLaunchArgument('driver', default_value='true'),
         # index_name:=_l o _r: usa los topics de un Sense del montaje doble (start_multi_sensor.bash),
         # p. ej. para teleoperar el Piper simulado con uno de los dos Sense conectados
         DeclareLaunchArgument('index_name', default_value=''),
@@ -26,7 +29,8 @@ def generate_launch_description():
 
     locator_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('piper'), 'launch', 'start_single_piper.launch.py')]),
-        condition=UnlessCondition(LaunchConfiguration('sim'))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('driver'), "'.lower() in ('true', '1') and '",
+                                                LaunchConfiguration('sim'), "'.lower() not in ('true', '1')"]))
     )
 
     return LaunchDescription(declared_arguments+[
